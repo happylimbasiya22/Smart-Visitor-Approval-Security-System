@@ -7,17 +7,28 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
 # Node modules (ALL levels)
 node_modules/
 **/node_modules/
 
-# Build folders
+# Build and Caches
 dist/
 dist-ssr/
 build/
 coverage/
+.vite/
+.eslintcache
 
-# Env files (VERY IMPORTANT)
+# Env files (VERY IMPORTANT - never commit actual secrets)
 .env
 .env.*
 !.env.example
@@ -25,19 +36,28 @@ coverage/
 # OS files
 .DS_Store
 Thumbs.db
+Desktop.ini
 
 # Editor directories
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # Misc
 *.local
 *.tmp
 *.temp
 
-# Package lock (optional - keep if team project)
+# Package lock (keep these tracked to ensure dependencies are reproducible for other devs)
 # package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
 
 # Database / secrets (if any)
 *.sqlite

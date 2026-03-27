@@ -1,33 +1,85 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import API from "../api";
 import "../App.css";
 
 export default function Guard() {
   const [form, setForm] = useState({
-    visitor_name: "",
-    visitor_phone: "",
-    flat_id: "",
-    visitor_type: "delivery",
-    purpose: "",
-    company_name: ""
+    name: "",
+    phone_no: "",
+    flat_no: "",
+    vehicle_no: "",
+    vehicle_type: "None",
+    entry_date: new Date().toISOString().split("T")[0],
+    entry_time: new Date().toTimeString().split(" ")[0].slice(0, 5)
   });
-  const [stats, setStats] = useState({ pending: 2, approved: 5, rejected: 1 });
-  const [visits, setVisits] = useState([
-    { visit_id: 1, visitor_name: "John Doe", purpose: "Delivery", status: "pending" },
-    { visit_id: 2, visitor_name: "Pushpa", purpose: "Guest", status: "approved" }
-  ]);
+  
+  const [visits, setVisits] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchVisits = async () => {
+    try {
+      const { data } = await API.get("/visits/global");
+      setVisits(data);
+    } catch (err) {
+      console.error("Fetch visits error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVisits();
+    const interval = setInterval(fetchVisits, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const user = JSON.parse(window.localStorage.getItem("currentUser") || "null");
 
-  const submit = () => {
-    if (!form.visitor_name || !form.visitor_phone || !form.flat_id || !form.purpose) {
+  const expectedVisits = visits.filter(v => v.status === "expected");
+  const activeVisits = visits.filter(v => v.status !== "expected");
+
+  const stats = {
+    pending: activeVisits.filter(v => v.status === "pending").length,
+    approved: activeVisits.filter(v => v.status === "approved").length,
+    rejected: activeVisits.filter(v => v.status === "rejected").length
+  };
+
+  const submit = async () => {
+    if (!form.name || !form.phone_no || !form.flat_no) {
       alert("Please fill all required fields");
       return;
     }
-    const next = visits.length + 1;
-    setVisits([...visits, { visit_id: next, visitor_name: form.visitor_name, purpose: form.purpose, status: "pending" }]);
-    setForm({ visitor_name: "", visitor_phone: "", flat_id: "", visitor_type: "delivery", purpose: "", company_name: "" });
-    setStats({ ...stats, pending: stats.pending + 1 });
-    alert("Visitor Added Successfully!");
+    
+    try {
+      await API.post("/visit", {
+         name: form.name,
+         phone_no: form.phone_no,
+         flat_no: form.flat_no,
+         vehicle_no: form.vehicle_no,
+         vehicle_type: form.vehicle_type,
+         entry_date: form.entry_date,
+         entry_time: form.entry_time
+      });
+      setForm({ 
+        name: "", phone_no: "", flat_no: "", vehicle_no: "", vehicle_type: "None",
+        entry_date: new Date().toISOString().split("T")[0],
+        entry_time: new Date().toTimeString().split(" ")[0].slice(0, 5)
+      });
+      fetchVisits();
+      alert("Visitor Added Successfully!");
+    } catch (err) {
+      alert("Failed to add visitor: " + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const handleMarkArrived = async (expected_id) => {
+    try {
+       await API.put(`/visit/${expected_id}/arrive`);
+       fetchVisits();
+       alert("Marked as Arrived and Approved!");
+    } catch (err) {
+       alert("Failed to mark arrived: " + (err.response?.data?.error || err.message));
+    }
   };
 
   const logout = () => {
@@ -67,87 +119,131 @@ export default function Guard() {
                 </div>
               </div>
             </div>
+
+            <div className="page-box" style={{ marginTop: "1.5rem", borderLeft: "4px solid #8b5cf6" }}>
+              <h2>📋 Expected Visitors (Pre-Approved)</h2>
+              <div className="visits-list">
+                {loading ? <p style={{ textAlign: "center", color: "#9ca3af" }}>Loading network data...</p> : 
+                  (expectedVisits.length === 0 ? (
+                    <p style={{ textAlign: "center", color: "#9ca3af" }}>No expected visitors right now.</p>
+                  ) : (
+                    expectedVisits.map(v => (
+                      <div key={v.visit_id} className="visit-card" style={{ background: "rgba(139, 92, 246, 0.05)" }}>
+                        <div className="visit-header">
+                          <div>
+                            <strong>{v.visitor_name}</strong>
+                            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: "4px 0 0 0" }}>Flat {v.flat_no} • {v.purpose}</p>
+                          </div>
+                          <span className="status-badge" style={{ background: "#ede9fe", color: "#8b5cf6", border: "1px solid #ddd6fe" }}>EXPECTED</span>
+                        </div>
+                        <p style={{ margin: "10px 0 0", fontSize: "0.85rem", color: "var(--text-main)", fontWeight: "600" }}>⏱ Expected at: {new Date(v.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                        <button 
+                          onClick={() => handleMarkArrived(v.visit_id)}
+                          className="btn-signin"
+                          style={{ marginTop: "1rem", background: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)" }}>
+                          ✅ Mark Arrived (Approved)
+                        </button>
+                      </div>
+                    ))
+                  ))
+                }
+              </div>
+            </div>
+            
+            <div className="page-box" style={{ marginTop: "1.5rem" }}>
+              <h2>Today's Visitor List</h2>
+              <div className="visits-list">
+                {activeVisits.length === 0 ? (
+                  <p style={{ textAlign: "center", color: "#9ca3af" }}>No visitors recorded yet</p>
+                ) : (
+                  activeVisits.map(v => (
+                    <div key={v.visit_id} className="visit-card">
+                      <div className="visit-header">
+                        <div>
+                           <strong>{v.visitor_name}</strong>
+                           <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: "4px 0 0 0" }}>Flat {v.flat_no} • {v.purpose}</p>
+                        </div>
+                        <span className={`status-badge status-${v.status}`}>{v.status.toUpperCase()}</span>
+                      </div>
+                      <p style={{ margin: "10px 0 0", fontSize: "0.85rem", color: "var(--text-muted)" }}>{new Date(v.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="portal-col-6">
             <div className="page-box">
               <h2>New Visitor Entry</h2>
               <form onSubmit={e => { e.preventDefault(); submit(); }}>
-                <div className="form-group">
-                  <label>Visitor Name *</label>
-                  <input
-                    type="text"
-                    placeholder="John Doe"
-                    value={form.visitor_name}
-                    onChange={e => setForm({ ...form, visitor_name: e.target.value })}
-                  />
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0 1rem" }}>
+                  <div className="form-group">
+                    <label>Name *</label>
+                    <input
+                      type="text"
+                      placeholder="John Doe"
+                      value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Phone No *</label>
+                    <input
+                      type="tel"
+                      placeholder="9876543210"
+                      value={form.phone_no}
+                      onChange={e => setForm({ ...form, phone_no: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Flat No *</label>
+                    <input
+                      type="text"
+                      placeholder="101"
+                      value={form.flat_no}
+                      onChange={e => setForm({ ...form, flat_no: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Vehicle No</label>
+                    <input
+                      type="text"
+                      placeholder="MH 01 AB 1234"
+                      value={form.vehicle_no}
+                      onChange={e => setForm({ ...form, vehicle_no: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Vehicle Type</label>
+                    <select value={form.vehicle_type} onChange={e => setForm({ ...form, vehicle_type: e.target.value })}>
+                      <option value="None">None</option>
+                      <option value="2-Wheeler">2-Wheeler</option>
+                      <option value="4-Wheeler">4-Wheeler</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Entry Date</label>
+                    <input
+                      type="date"
+                      value={form.entry_date}
+                      onChange={e => setForm({ ...form, entry_date: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: "span 2" }}>
+                    <label>Entry Time</label>
+                    <input
+                      type="time"
+                      value={form.entry_time}
+                      onChange={e => setForm({ ...form, entry_time: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>Phone *</label>
-                  <input
-                    type="tel"
-                    placeholder="9876543210"
-                    value={form.visitor_phone}
-                    onChange={e => setForm({ ...form, visitor_phone: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Flat ID *</label>
-                  <input
-                    type="text"
-                    placeholder="101"
-                    value={form.flat_id}
-                    onChange={e => setForm({ ...form, flat_id: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Type</label>
-                  <select value={form.visitor_type} onChange={e => setForm({ ...form, visitor_type: e.target.value })}>
-                    <option value="delivery">Delivery</option>
-                    <option value="guest">Guest</option>
-                    <option value="service">Service</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Purpose *</label>
-                  <input
-                    type="text"
-                    placeholder="Package delivery, visit, etc."
-                    value={form.purpose}
-                    onChange={e => setForm({ ...form, purpose: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Company (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="Company name"
-                    value={form.company_name}
-                    onChange={e => setForm({ ...form, company_name: e.target.value })}
-                  />
-                </div>
-                <button type="submit" className="btn-signin">Add Visitor</button>
+                <button type="submit" className="btn-signin" disabled={loading} style={{ marginTop: "0.5rem" }}>
+                  {loading ? 'Connecting...' : 'Add Visitor'}
+                </button>
               </form>
             </div>
-          </div>
-        </div>
-
-        <div className="page-box">
-          <h2>Today's Visitor List</h2>
-          <div className="visits-list">
-            {visits.length === 0 ? (
-              <p style={{ textAlign: "center", color: "#9ca3af" }}>No visitors recorded yet</p>
-            ) : (
-              visits.map(v => (
-                <div key={v.visit_id} className="visit-card">
-                  <div className="visit-header">
-                    <strong>{v.visitor_name}</strong>
-                    <span className={`status-badge status-${v.status}`}>{v.status.toUpperCase()}</span>
-                  </div>
-                  <p className="visit-purpose">{v.purpose}</p>
-                </div>
-              ))
-            )}
           </div>
         </div>
       </div>

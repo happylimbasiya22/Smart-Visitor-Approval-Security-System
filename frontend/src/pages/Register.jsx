@@ -7,6 +7,7 @@ export default function Register() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("resident");
+  const [flatNo, setFlatNo] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -58,7 +59,8 @@ export default function Register() {
         email,
         phone,
         password,
-        role
+        role,
+        ...(role === "resident" && { flat_no: flatNo })
       };
       console.log("Sending registration data:", payload);
       
@@ -136,6 +138,19 @@ export default function Register() {
                 <option value="admin">Admin</option>
               </select>
             </div>
+
+            {role === "resident" && (
+              <div className="form-group">
+                <label>Flat Number</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 101, A-204"
+                  value={flatNo}
+                  onChange={e => setFlatNo(e.target.value)}
+                  required
+                />
+              </div>
+            )}
 
             <div className="form-group">
               <label>Email</label>
