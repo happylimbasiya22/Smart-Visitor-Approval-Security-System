@@ -69,24 +69,63 @@ exports.getVisitById = async (req, res) => {
   res.json(result.rows[0]);
 };
 
+// Get Visits for Resident and filtering
 exports.approveVisit = async (req, res) => {
-  const { id } = req.params;
-  await pool.query(`UPDATE visits SET status='approved' WHERE visit_id=$1`, [id]);
-  await pool.query(
-    `INSERT INTO audit_logs (user_id, action, table_name, record_id) VALUES ($1,$2,$3,$4)`,
-    [req.user.user_id, 'APPROVED_VISIT', 'visits', id]
-  );
-  res.json({ message: "Approved" });
+  try {
+    const { id } = req.params;
+    const { flat_id, user_id } = req.user;
+
+    const visitCheck = await pool.query(
+      "SELECT * FROM visits WHERE visit_id = $1 AND flat_id = $2",
+      [id, flat_id]
+    );
+
+    if (!visitCheck.rows.length) {
+      return res.status(403).json({ error: "You cannot approve this visit" });
+    }
+
+    await pool.query(`UPDATE visits SET status='approved' WHERE visit_id=$1`, [id]);
+
+    await pool.query(
+      `INSERT INTO audit_logs (user_id, action, table_name, record_id)
+       VALUES ($1, $2, $3, $4)`,
+      [user_id, "APPROVED_VISIT", "visits", id]
+    );
+
+    res.json({ message: "Approved" });
+  } catch (err) {
+    console.error("approveVisit error:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.rejectVisit = async (req, res) => {
-  const { id } = req.params;
-  await pool.query(`UPDATE visits SET status='rejected' WHERE visit_id=$1`, [id]);
-  await pool.query(
-    `INSERT INTO audit_logs (user_id, action, table_name, record_id) VALUES ($1,$2,$3,$4)`,
-    [req.user.user_id, 'REJECTED_VISIT', 'visits', id]
-  );
-  res.json({ message: "Rejected" });
+  try {
+    const { id } = req.params;
+    const { flat_id, user_id } = req.user;
+
+    const visitCheck = await pool.query(
+      "SELECT * FROM visits WHERE visit_id = $1 AND flat_id = $2",
+      [id, flat_id]
+    );
+
+    if (!visitCheck.rows.length) {
+      return res.status(403).json({ error: "You cannot reject this visit" });
+    }
+
+    await pool.query(`UPDATE visits SET status='rejected' WHERE visit_id=$1`, [id]);
+
+    await pool.query(
+      `INSERT INTO audit_logs (user_id, action, table_name, record_id)
+       VALUES ($1, $2, $3, $4)`,
+      [user_id, "REJECTED_VISIT", "visits", id]
+    );
+
+    res.json({ message: "Rejected" });
+  } catch (err) {
+    console.error("rejectVisit error:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.getAdminStats = async (req, res) => {
