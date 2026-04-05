@@ -46,23 +46,28 @@ export default function Login() {
     <div className="auth-container">
       <div className="auth-left">
         <div className="auth-brand">
-          <div className="brand-logo">🛡️</div>
-          <h1>Smart Visitor</h1>
-          <p>Enterprise-grade visitor management and security monitoring platform</p>
+          <div className="brand-header">
+            <div className="brand-logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shield-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <span className="brand-name">VisitorGuard</span>
+          </div>
+          <h1>Smart Visitor System</h1>
+          <p>Secure and efficient visitor management platform for modern residential communities.</p>
         </div>
       </div>
 
       <div className="auth-right">
         <div className="auth-form-box">
-          <h2>Welcome back</h2>
-          <p className="auth-subtitle">Sign in to your security dashboard</p>
+          <h2 className="auth-title">Sign in</h2>
+          <p className="auth-subtitle">Enter your credentials to continue</p>
 
           <form onSubmit={submit}>
             <div className="form-group">
               <label>Email</label>
               <input
                 type="email"
-                placeholder="admin@example.com"
+                placeholder="you@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -73,7 +78,7 @@ export default function Login() {
               <label>Password</label>
               <input
                 type="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
@@ -83,15 +88,13 @@ export default function Login() {
             {error && <p className="error-msg">{error}</p>}
 
             <button type="submit" className="btn-signin" disabled={loading}>
-              {loading ? "Signing In..." : "Sign In"}
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
           <div className="auth-footer">
-            <p>Don't have an account? <a href="#" onClick={e => { e.preventDefault(); navigate("/register"); }}>Sign Up</a></p>
+            <p>Don't have an account? <a href="#" onClick={e => { e.preventDefault(); navigate("/register"); }}>Create account</a></p>
           </div>
-
-          <p className="security-note">🔒 Protected by enterprise-grade encryption</p>
         </div>
       </div>
     </div>

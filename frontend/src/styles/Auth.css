@@ -9,38 +9,15 @@
 
 .auth-left {
   flex: 1;
-  /* Beautiful Modern Gradient */
-  background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%);
+  /* Dark overlay + background image */
+  background: linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.9)), url('/bg.png') center/cover no-repeat;
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: flex-start;
   color: white;
-  padding: 3rem;
+  padding: 4rem;
   overflow: hidden;
-}
-
-/* Glassmorphic decorative circles in background */
-.auth-left::before {
-  content: '';
-  position: absolute;
-  top: -10%;
-  left: -10%;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
-}
-
-.auth-left::after {
-  content: '';
-  position: absolute;
-  bottom: -20%;
-  right: -10%;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(99,102,241,0.4) 0%, rgba(99,102,241,0) 70%);
 }
 
 .auth-brand {
@@ -48,19 +25,35 @@
   z-index: 10;
   text-align: left;
   max-width: 480px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 3rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: var(--shadow-xl);
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .brand-logo {
-  font-size: 3.5rem;
-  margin-bottom: 1.5rem;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background-color: #6366f1;
+  border-radius: 12px;
+  color: white;
+}
+
+.shield-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.brand-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
 }
 
 .auth-brand h1 {
@@ -104,7 +97,7 @@
 }
 
 .auth-form-box h2 {
-  color: var(--text-main);
+  color: var(--text-main, #111827);
   font-size: 2rem;
   margin: 0 0 0.5rem;
   font-weight: 700;
@@ -112,9 +105,9 @@
 }
 
 .auth-subtitle {
-  color: var(--text-muted);
+  color: var(--text-muted, #6b7280);
   font-size: 1rem;
-  margin: 0 0 2rem;
+  margin: 0 0 2.5rem;
 }
 
 .error-msg {
@@ -166,14 +159,7 @@
 }
 
 .security-note {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  margin-top: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  display: none;
 }
 
 form {

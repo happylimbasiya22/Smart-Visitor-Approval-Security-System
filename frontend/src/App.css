@@ -168,7 +168,7 @@
 .btn-signin {
   width: 100%;
   padding: 0.75rem 1.5rem;
-  background-color: var(--primary);
+  background-color: #334155;
   color: white;
   border: none;
   border-radius: var(--radius-sm);
@@ -179,7 +179,7 @@
 }
 
 .btn-signin:hover {
-  background-color: var(--primary-hover);
+  background-color: #1e293b;
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
